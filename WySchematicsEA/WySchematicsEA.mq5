@@ -26,7 +26,7 @@
 //|                      scalp execution, risk management            |
 //+------------------------------------------------------------------+
 #property copyright "kellwyn"
-#property version   "1.0.0"
+#property version   "1.00"
 #property strict
 
 #include <Trade\Trade.mqh>
@@ -174,7 +174,8 @@ void OnTick()
 
    // Load OHLCV data
    int bars = InpLookback;
-   double high[], low[], close[], open[], volume[];
+   double high[], low[], close[], open[];
+   long   volume[];
    ArraySetAsSeries(high,   true);
    ArraySetAsSeries(low,    true);
    ArraySetAsSeries(close,  true);
@@ -185,11 +186,11 @@ void OnTick()
    if(CopyLow(_Symbol,   InpTimeframe, 1, bars, low)    <= 0) return;
    if(CopyClose(_Symbol, InpTimeframe, 1, bars, close)  <= 0) return;
    if(CopyOpen(_Symbol,  InpTimeframe, 1, bars, open)   <= 0) return;
-   if(CopyTickVolume(_Symbol, InpTimeframe, 1, bars, (long&)volume[0]) <= 0)
+   if(CopyTickVolume(_Symbol, InpTimeframe, 1, bars, volume) <= 0)
    {
       // fallback — real volume may not be available on all symbols
       ArrayResize(volume, bars);
-      ArrayInitialize(volume, 1.0);
+      ArrayInitialize(volume, 1);
    }
 
    // Detect phase and subphase
@@ -216,7 +217,7 @@ void OnTick()
 //──────────────────────────────────────────────────────────────────
 void DetectPhase(const double &high[], const double &low[],
                  const double &close[], const double &open[],
-                 const double &vol[], int bars)
+                 const long &vol[], int bars)
 {
    // Build trading range from recent swing high/low
    int trBars = MathMin(bars, 100);
@@ -225,7 +226,7 @@ void DetectPhase(const double &high[], const double &low[],
 
    // Detect volume average
    double avgVol = 0;
-   for(int i = 0; i < InpVolLookback && i < bars; i++) avgVol += vol[i];
+   for(int i = 0; i < InpVolLookback && i < bars; i++) avgVol += (double)vol[i];
    avgVol /= InpVolLookback;
 
    double recentClose  = close[0];
@@ -328,7 +329,7 @@ bool PhaseIsEnabled()
 //──────────────────────────────────────────────────────────────────
 int GetSubPhaseSignal(const double &high[], const double &low[],
                       const double &close[], const double &open[],
-                      const double &vol[], int bars)
+                      const long &vol[], int bars)
 {
    // Candle properties
    double body    = MathAbs(close[0] - open[0]);
@@ -339,9 +340,9 @@ int GetSubPhaseSignal(const double &high[], const double &low[],
    bool   bearBar = close[0] < open[0];
 
    double avgVol = 0;
-   for(int i = 0; i < InpVolLookback && i < bars; i++) avgVol += vol[i];
+   for(int i = 0; i < InpVolLookback && i < bars; i++) avgVol += (double)vol[i];
    avgVol /= InpVolLookback;
-   bool volAboveAvg = (vol[0] > avgVol);
+   bool volAboveAvg = ((double)vol[0] > avgVol);
 
    switch(g_SubPhase)
    {
