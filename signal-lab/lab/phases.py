@@ -106,7 +106,7 @@ class PhaseDetector:
         df = df.copy()
         if "tick_volume" in df.columns and "volume" not in df.columns:
             df["volume"] = df["tick_volume"]
-        df["volume"] = df["volume"].replace(0, np.nan).fillna(method="ffill").fillna(1)
+        df["volume"] = df["volume"].replace(0, np.nan).ffill().fillna(1)
         return df
 
     def _trading_range(self, df: pd.DataFrame):
